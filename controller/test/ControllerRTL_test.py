@@ -9,7 +9,7 @@ Author : Cheng Tan
 '''
 
 from pymtl3 import *
-from pymtl3.stdlib.test_utils import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator, config_model_with_cmdline_opts
 from ..ControllerRTL import ControllerRTL
 from ...lib.basic.val_rdy.SinkRTL import SinkRTL as TestSinkRTL
 from ...lib.basic.val_rdy.SourceRTL import SourceRTL as TestSrcRTL
@@ -234,7 +234,7 @@ expected_to_noc_pkts = [
     Pkt(1,   3,  1,    0,    3,    0,    0,  0, CMD_STORE_REQUEST, 15,  150, 1),
 ]
 
-def test_simple():
+def test_simple(cmdline_opts):
   print("controller2addr_map: ", controller2addr_map)
   th = TestHarness(ControllerIdType, CtrlPktType,
                    CmdType, DataType,
@@ -253,4 +253,6 @@ def test_simple():
                    expected_to_noc_pkts,
                    controller2addr_map, idTo2d_map,
                    nterminals)
+  th.elaborate()
+  th = config_model_with_cmdline_opts(th, cmdline_opts, duts = ['dut'])
   run_sim(th)
