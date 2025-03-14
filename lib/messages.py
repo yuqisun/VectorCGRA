@@ -710,7 +710,7 @@ def mk_tile_sram_xbar_pkt(number_src = 5, number_dst = 5,
 # Ring for delivering ctrl and data signals and commands across CGRAs
 #=========================================================================
 
-def mk_intra_cgra_pkt(nrouters = 4,
+def mk_intra_cgra_pkt(ntiles = 4,
                      ctrl_actions = 8,
                      ctrl_mem_size = 4,
                      ctrl_operations = 7,
@@ -720,10 +720,13 @@ def mk_intra_cgra_pkt(nrouters = 4,
                      ctrl_tile_outports = 5,
                      ctrl_registers_per_reg_bank = 16,
                      data_nbits = 16,
+                     ncgras = 4,
+                     addr_nbits = 16,
+                     predicate_nbits = 1,
                      prefix="IntraCgraPacket"):
 
-  IdType = mk_bits(clog2(nrouters))
-  opaque_nbits = 1
+  TileIdType = mk_bits(clog2(ntiles))
+  opaque_nbits = 8
   OpqType = mk_bits(opaque_nbits)
   CtrlActionType = mk_bits(clog2(ctrl_actions))
   CtrlAddrType = mk_bits(clog2(ctrl_mem_size))
@@ -734,7 +737,7 @@ def mk_intra_cgra_pkt(nrouters = 4,
   CtrlRoutingOutType = mk_bits(clog2(num_routing_outports + 1))
   CtrlFuInType = mk_bits(clog2(ctrl_fu_inports + 1))
   CtrlFuOutType = mk_bits(clog2(ctrl_fu_outports + 1))
-  CtrlPredicateType = mk_bits(1)
+  CtrlPredicateType = mk_bits(predicate_nbits)
   vector_factor_power_nbits = 3
   CtrlVectorFactorPowerType = mk_bits(vector_factor_power_nbits)
 
@@ -744,7 +747,11 @@ def mk_intra_cgra_pkt(nrouters = 4,
   VcIdType = mk_bits(1)
   DataType = mk_bits(data_nbits)
 
-  new_name = f"{prefix}_{nrouters}_{opaque_nbits}_{ctrl_actions}_" \
+  CgraIdType = mk_bits(clog2(ncgras))
+  DataPredicateType = mk_bits(predicate_nbits)
+  AddrType = mk_bits(addr_nbits)
+
+  new_name = f"{prefix}_{ntiles}_{opaque_nbits}_{ctrl_actions}_" \
              f"{ctrl_mem_size}_{ctrl_operations}_{ctrl_fu_inports}_" \
              f"{ctrl_fu_outports}_{ctrl_tile_inports}_" \
              f"{ctrl_tile_outports}_{ctrl_registers_per_reg_bank}"
@@ -814,8 +821,8 @@ def mk_intra_cgra_pkt(nrouters = 4,
            f"{out_str}"
 
   field_dict = {}
-  field_dict['src'] = IdType
-  field_dict['dst'] = IdType
+  field_dict['src'] = TileIdType
+  field_dict['dst'] = TileIdType
   field_dict['opaque'] = OpqType
   field_dict['vc_id'] = VcIdType
   field_dict['ctrl_action'] = CtrlActionType
@@ -857,7 +864,9 @@ def mk_intra_cgra_pkt(nrouters = 4,
   # Indicates whether to read data from the register bank.
   field_dict['ctrl_read_reg_from'] = [b1 for _ in range(ctrl_fu_inports)]
   field_dict['ctrl_read_reg_idx'] = [CtrlRegIdxType for _ in range(ctrl_fu_inports)]
-
+  field_dict['cgra_id'] = CgraIdType
+  field_dict['addr'] = AddrType
+  field_dict['data_predicate'] = DataPredicateType
   return mk_bitstruct(new_name, field_dict,
     namespace = {'__str__': str_func}
   )
