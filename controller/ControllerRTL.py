@@ -152,11 +152,13 @@ class ControllerRTL(Component):
                      0, # dst_y
                      0,
                      0,
-                     CMD_LOAD_REQUEST,
                      s.recv_from_tile_load_request_pkt_queue.send.msg.addr,
                      0,
                      1,
-                     0)
+                     0,
+                     0,
+                     CMD_LOAD_REQUEST,
+                     0, 0, 0, 0, 0, 0, 0)
 
 
 
@@ -172,11 +174,13 @@ class ControllerRTL(Component):
                      0, # dst_y
                      0,
                      0,
-                     CMD_STORE_REQUEST,
                      s.recv_from_tile_store_request_pkt_queue.send.msg.addr,
                      s.recv_from_tile_store_request_pkt_queue.send.msg.data,
                      s.recv_from_tile_store_request_pkt_queue.send.msg.predicate,
-                     0)
+                     0,
+                     0,
+                     CMD_STORE_REQUEST,
+                     0, 0, 0, 0, 0, 0, 0)
 
 
       # For the load response (i.e., the data towards other) from local memory.
@@ -192,13 +196,15 @@ class ControllerRTL(Component):
                      0, # dst_y
                      0,
                      0,
-                     CMD_LOAD_RESPONSE,
                      # Retrieves the load (from NoC) address from the message.
                      # The addr information is embedded in the message.
                      s.recv_from_tile_load_response_pkt_queue.send.msg.addr,
                      s.recv_from_tile_load_response_pkt_queue.send.msg.data,
                      s.recv_from_tile_load_response_pkt_queue.send.msg.predicate,
-                     0)
+                     0,
+                     0,
+                     CMD_LOAD_RESPONSE,
+                     0, 0, 0, 0, 0, 0, 0)
 
       # TODO: For the other cmd types.
 
@@ -220,14 +226,14 @@ class ControllerRTL(Component):
       # For the load request from NoC.
       received_pkt = s.recv_from_noc.msg
       if s.recv_from_noc.val:
-        if s.recv_from_noc.msg.cmd == CMD_LOAD_REQUEST:
+        if s.recv_from_noc.msg.ctrl_action == CMD_LOAD_REQUEST:
           if s.send_to_tile_load_request_addr_queue.recv.rdy:
             s.recv_from_noc.rdy @= 1
             s.send_to_tile_load_request_addr_queue.recv.msg @= \
                 CGRAAddrType(received_pkt.addr)
             s.send_to_tile_load_request_addr_queue.recv.val @= 1
 
-        elif s.recv_from_noc.msg.cmd == CMD_STORE_REQUEST:
+        elif s.recv_from_noc.msg.ctrl_action == CMD_STORE_REQUEST:
           if s.send_to_tile_store_request_addr_queue.recv.rdy & \
              s.send_to_tile_store_request_data_queue.recv.rdy:
             s.recv_from_noc.rdy @= 1
@@ -238,7 +244,7 @@ class ControllerRTL(Component):
             s.send_to_tile_store_request_addr_queue.recv.val @= 1
             s.send_to_tile_store_request_data_queue.recv.val @= 1
 
-        elif s.recv_from_noc.msg.cmd == CMD_LOAD_RESPONSE:
+        elif s.recv_from_noc.msg.ctrl_action == CMD_LOAD_RESPONSE:
           if s.send_to_tile_load_response_data_queue.recv.rdy:
             s.recv_from_noc.rdy @= 1
             s.send_to_tile_load_response_data_queue.recv.msg @= \
@@ -264,11 +270,13 @@ class ControllerRTL(Component):
                      s.idTo2d_y_lut[addr_dst_id],
                      s.crossbar.send[0].msg.opaque,
                      s.crossbar.send[0].msg.vc_id,
-                     s.crossbar.send[0].msg.cmd,
                      s.crossbar.send[0].msg.addr,
                      s.crossbar.send[0].msg.data,
                      s.crossbar.send[0].msg.predicate,
-                     s.crossbar.send[0].msg.payload)
+                     s.crossbar.send[0].msg.payload,
+                     0,
+                     s.crossbar.send[0].msg.ctrl_action,
+                     0, 0, 0, 0, 0, 0, 0)
 
   def line_trace(s):
     send_to_ctrl_ring_ctrl_pkt_str = "send_to_ctrl_ring_ctrl_pkt: " + str(s.send_to_ctrl_ring_ctrl_pkt.msg)
